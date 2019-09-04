@@ -46,42 +46,21 @@ public class SellerDaoJDBC implements SellerDao {
 		ResultSet rs = null;
 
 		try {
-			// Para iniciar o preparedStatement, st recebe conexão.prepareStatement e é
-			// passado o comando SQL como parâmetro.
+
 			st = conn.prepareStatement(
 					"SELECT seller.*,department.Name as DepName " + "FROM seller INNER JOIN department "
 							+ "ON seller.DepartmentId = department.Id " + "WHERE seller.Id = ?");
 
-			// O primeiro "?" vai receber o valor do id passado no parâmetro do método
 			// findById
 			st.setInt(1, id);
-			// Meu resultado é = st.executeQuery. executeQuery = comando SQL
+
 			rs = st.executeQuery();
 
-			/*
-			 * A classe DAO é responsável por pegar os dados do banco de dados relacional e
-			 * transformar em objetos associados, logo, deve ser criado objetos. If para
-			 * testar se veio algum resultado na consulta sql, caso não retorne nenhum
-			 * registro o if é ignorado e é retornado o valor null Se der verdadeiro
-			 * significa que retornou a tabela do banco de dados e é necessário a navegação
-			 * entre os dados dessa tabela para instanciar os objetos
-			 */
 			if (rs.next()) {
-				// Inicia o departamento
-				Department dp = new Department();
-				// Pega o ID do departamento para setar o id dele
-				dp.setId(rs.getInt("DepartmentId"));
-				// Pega o nome do departamento para setar o nome dele
-				dp.setName(rs.getString("DepName"));
 
-				Seller obj = new Seller();
-				obj.setId(rs.getInt("Id"));
-				obj.setName(rs.getString("Name"));
-				obj.setEmail(rs.getString("Email"));
-				obj.setBirthDate(rs.getDate("BirthDate"));
-				obj.setBaseSalary(rs.getDouble("BaseSalary"));
-				obj.setDepartment(dp);
-				return obj;
+				Department dep = instantiateDepartment(rs);
+
+				Seller obj = instatiateSeller(rs, dep);
 			}
 			return null;
 		} catch (SQLException e) {
@@ -90,6 +69,26 @@ public class SellerDaoJDBC implements SellerDao {
 			DB.closeStatement(st);
 			DB.closeResultSet(rs);
 		}
+	}
+
+	private Seller instatiateSeller(ResultSet rs, Department dep) throws SQLException {
+		Seller obj = new Seller();
+		obj.setId(rs.getInt("Id"));
+		obj.setName(rs.getString("Name"));
+		obj.setEmail(rs.getString("Email"));
+		obj.setBirthDate(rs.getDate("BirthDate"));
+		obj.setBaseSalary(rs.getDouble("BaseSalary"));
+		obj.setDepartment(dep);
+		return obj;
+	}
+
+	private Department instantiateDepartment(ResultSet rs) throws SQLException {
+		Department dep = new Department();
+		dep.setId(rs.getInt("DepartmentId"));
+		dep.setName(rs.getString("DepName"));
+
+		return dep;
+
 	}
 
 	@Override
