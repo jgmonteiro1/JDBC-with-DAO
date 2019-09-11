@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +28,45 @@ public class SellerDaoJDBC implements SellerDao {
 
 	@Override
 	public void insert(Seller obj) {
-		// TODO Auto-generated method stub
+		PreparedStatement st = null;
+		try {
+			//Prepara a conexão
+			st = conn.prepareStatement(
+					"INSERT INTO seller" 
+				   +"(Name, Email, BirthDate, BaseSalary, DepartmentId)\r\n" + 
+					"VALUES" 
+				   +"(?, ?, ?, ?, ?)", 
+				   //Para retornar o  ID do novo vendedor inserido
+				   Statement.RETURN_GENERATED_KEYS);
+			//Pega o obj que está sendo recebido como parâmetro de entrada e atribui os atributos que estão estabelecidos na classe "Seller"
+			st.setString(1, obj.getName());
+			st.setString(2, obj.getEmail());
+			st.setDate(3, new java.sql.Date(obj.getBirthDate().getTime()));
+			st.setDouble(4, obj.getBaseSalary());
+			//Para pegar o Id do Departamento é necessário antes dar um getDepartment  e a partir desse objeto chamar o getId, navegando no objeto.
+			st.setInt(5, obj.getDepartment().getId());
+			
+			int LinhasAfetadas = st.executeUpdate();
+			
+			//Se as linhas afetadas forem maior que zero, significa que foi inserido
+			if(LinhasAfetadas > 0) {
+				ResultSet rs = st.getGeneratedKeys();
+				if(rs.next()) {
+					//Pega o  Id gerado
+					int id = rs.getInt(1);
+					//Atribui o Id gerado dentro do objeto "obj" <- que é o que está no parâmetro
+					obj.setId(id);		
+				}
+				DB.closeResultSet(rs);
+				//Caso nenhuma linha tenha sido alterada -> Lança uma exceção
+			} else  {
+				throw new DbException("Erro inesperado, nenhuma linha foi alterada	=[");
+			}
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		} finally {
+			DB.closeStatement(st);
+		}
 
 	}
 
